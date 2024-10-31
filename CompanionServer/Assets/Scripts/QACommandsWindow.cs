@@ -18,6 +18,11 @@ public class QACommandsWindow : EditorWindow
             SendCommand("EnterPlaymode");
         }
 
+        if (GUILayout.Button("Get Playmode Status"))
+        {
+            SendCommand("GetPlayModeStatus");
+        }
+
         if (GUILayout.Button("Return Console Log Line"))
         {
             SendCommand("ReturnConsoleLogLine");

@@ -3,11 +3,13 @@ using System;
 using Fleck;
 using System.Threading.Tasks;
 using UnityEditor;
+using System.Collections;
 
 public class EditorCompanionServer : MonoBehaviour
 {
     private WebSocketServer server;
     private IWebSocketConnection clientSocket;
+    private bool awaitingReconnection = false;
 
     public static EditorCompanionServer Instance { get; private set; }
 
@@ -16,6 +18,7 @@ public class EditorCompanionServer : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
+            DontDestroyOnLoad(gameObject); // Keeps server running across scene loads
         }
         else
         {
@@ -25,15 +28,28 @@ public class EditorCompanionServer : MonoBehaviour
 
     void Start()
     {
-        string connection = "ws://0.0.0.0:8080";
+        StartServer();
+    }
+
+    private void StartServer()
+    {
+        // Dispose of the existing server instance, if any, to free up the port
+        if (server != null)
+        {
+            server.Dispose();
+            server = null;
+        }
+
+        string connection = "ws://0.0.0.0:8082";
         server = new WebSocketServer(connection);
         server.Start(socket =>
         {
-            clientSocket = socket;
             socket.OnOpen = () =>
             {
+                clientSocket = socket;
+                awaitingReconnection = false;
                 Debug.Log("Connection opened");
-                socket.Send("ReturnConsoleLogLine,1");
+
                 // Notify Unity editor about the connection
                 EditorApplication.delayCall += () => ClientCommandsWindow.NotifyClientConnected();
             };
@@ -41,6 +57,7 @@ public class EditorCompanionServer : MonoBehaviour
             {
                 Debug.Log("Connection closed");
                 clientSocket = null;
+                awaitingReconnection = true;
             };
             socket.OnMessage = async (message) =>
             {
@@ -48,6 +65,22 @@ public class EditorCompanionServer : MonoBehaviour
                 await HandleCommand(socket, message);
             };
         });
+    }
+
+    void Update()
+    {
+        // Attempt reconnection if awaiting a reconnect
+        if (awaitingReconnection && clientSocket == null)
+        {
+            awaitingReconnection = false; // Reset to avoid multiple calls
+            StartCoroutine(RestartServerWithDelay(1.0f)); // Delay before restart
+        }
+    }
+
+    private IEnumerator RestartServerWithDelay(float delaySeconds)
+    {
+        yield return new WaitForSeconds(delaySeconds);
+        StartServer();
     }
 
     public void SendCommandToClient(string command)
@@ -62,43 +95,9 @@ public class EditorCompanionServer : MonoBehaviour
         }
     }
 
-    //private async Task HandleCommand(IWebSocketConnection socket, string message)
-    //{
-    //    var parts = message.Split(new[] { '|' }, 2); // Change split character to '|'
-    //    if (parts.Length > 0)
-    //    {
-    //        string command = parts[0];
-    //        string arguments = parts.Length > 1 ? parts[1] : string.Empty;
-
-    //        try
-    //        {
-    //            switch (command)
-    //            {
-    //                case "ReturnConsoleLogLine":
-    //                    await socket.Send($"ReturnConsoleLogLine|{arguments}");
-    //                    break;
-    //                case "EnterPlaymode":
-    //                    await socket.Send("EnterPlaymode");
-    //                    break;
-    //                case "ReadScriptContent": // Handle ScriptContent directly
-    //                    HandleScriptContent(arguments);
-    //                    break;
-    //                default:
-    //                    Debug.LogWarning("Unknown command received: " + message);
-    //                    break;
-    //            }
-    //        }
-    //        catch (Exception ex)
-    //        {
-    //            Debug.LogError("Error handling command: " + ex.Message);
-    //            await socket.Send("Error: " + ex.Message);
-    //        }
-    //    }
-    //}
-
     private async Task HandleCommand(IWebSocketConnection socket, string message)
     {
-        var parts = message.Split(new[] { '|' }, 2); // Change split character to '|'
+        var parts = message.Split(new[] { '|' }, 2);
         if (parts.Length > 0)
         {
             string command = parts[0];
@@ -114,7 +113,7 @@ public class EditorCompanionServer : MonoBehaviour
                     case "EnterPlaymode":
                         await socket.Send("EnterPlaymode");
                         break;
-                    case "ReadScriptContent": // Handle ScriptContent directly
+                    case "ReadScriptContent":
                         HandleScriptContent(arguments);
                         break;
                     case "ScreenshotTaken":
@@ -132,6 +131,7 @@ public class EditorCompanionServer : MonoBehaviour
             }
         }
     }
+
     private void HandleScriptContent(string arguments)
     {
         var args = arguments.Split(new[] { '|' }, 2);
@@ -144,6 +144,16 @@ public class EditorCompanionServer : MonoBehaviour
         else
         {
             Debug.LogWarning("Invalid arguments for ScriptContent");
+        }
+    }
+
+    void OnDestroy()
+    {
+        // Ensure server is shut down gracefully
+        if (server != null)
+        {
+            server.Dispose();
+            Debug.Log("WebSocket server closed");
         }
     }
 }
