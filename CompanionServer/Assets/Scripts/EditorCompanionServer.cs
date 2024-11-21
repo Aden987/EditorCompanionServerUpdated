@@ -19,6 +19,9 @@ public class EditorCompanionServer : MonoBehaviour
         {
             Instance = this;
             DontDestroyOnLoad(gameObject); // Keeps server running across scene loads
+
+            // Register play mode state change callback
+            EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
         }
         else
         {
@@ -62,9 +65,11 @@ public class EditorCompanionServer : MonoBehaviour
             socket.OnMessage = async (message) =>
             {
                 Debug.Log("Server received: " + message);
-                await HandleCommand(socket, message);
+                await OnMessageReceived(socket, message); // Handle the message
             };
         });
+
+        Debug.Log("WebSocket server started at ws://0.0.0.0:8082");
     }
 
     void Update()
@@ -92,6 +97,21 @@ public class EditorCompanionServer : MonoBehaviour
         else
         {
             Debug.LogError("No client connected or socket is not available.");
+        }
+    }
+
+    private async Task OnMessageReceived(IWebSocketConnection socket, string message)
+    {
+        if (message == "Authentication") 
+        {
+            try
+            {
+                await socket.Send("Authentication Recieved");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"Failed to send acknowledgment: {ex.Message}");
+            }
         }
     }
 
@@ -147,13 +167,50 @@ public class EditorCompanionServer : MonoBehaviour
         }
     }
 
+    private void OnPlayModeStateChanged(PlayModeStateChange state)
+    {
+        if (state == PlayModeStateChange.ExitingPlayMode)
+        {
+            Debug.Log("Exiting play mode: Shutting down server.");
+            ShutDownServer();
+        }
+    }
+
+    private void ShutDownServer()
+    {
+        if (server != null)
+        {
+            try
+            {
+                if (clientSocket != null)
+                {
+                    clientSocket.Close(); // Close client connection if active
+                    clientSocket = null;
+                }
+
+                server.Dispose(); // Dispose of the server instance
+                server = null;
+
+                Debug.Log("WebSocket server shut down successfully.");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError("Error while shutting down server: " + ex.Message);
+            }
+        }
+        else
+        {
+            Debug.LogWarning("Server is already null or not running.");
+        }
+    }
+
+
     void OnDestroy()
     {
         // Ensure server is shut down gracefully
-        if (server != null)
-        {
-            server.Dispose();
-            Debug.Log("WebSocket server closed");
-        }
+        ShutDownServer();
+
+        // Unregister play mode state change callback
+        EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
     }
 }
