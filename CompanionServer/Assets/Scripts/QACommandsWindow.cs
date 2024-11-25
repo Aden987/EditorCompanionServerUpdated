@@ -23,9 +23,9 @@ public class QACommandsWindow : EditorWindow
             SendCommand("GetPlayModeStatus");
         }
 
-        if (GUILayout.Button("Return Console Log Line"))
+        if (GUILayout.Button("Return Console Log"))
         {
-            SendCommand("ReturnConsoleLogLine");
+            SendCommand("ReturnConsoleLog");
         }
 
         if (GUILayout.Button("Read First Error In Log"))
