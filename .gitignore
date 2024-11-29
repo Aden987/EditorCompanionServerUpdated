@@ -70,3 +70,24 @@ crashlytics-build.properties
 # Temporary auto-generated Android Assets
 /[Aa]ssets/[Ss]treamingAssets/aa.meta
 /[Aa]ssets/[Ss]treamingAssets/aa/*
+CompanionServer/Library/ArtifactDB
+CompanionServer/Library/Bee/artifacts/1900b0aE.dag/Assembly-CSharp.dll
+CompanionServer/Library/Bee/artifacts/1900b0aE.dag/Assembly-CSharp.ref.dll
+CompanionServer/Library/Bee/backend1.traceevents
+CompanionServer/Library/Bee/fullprofile.json
+CompanionServer/Library/Bee/tundra.digestcache
+CompanionServer/Library/Bee/tundra.log.json
+CompanionServer/Library/Bee/TundraBuildState.state
+CompanionServer/Library/Bee/TundraBuildState.state.map
+CompanionServer/Library/ilpp.pid
+CompanionServer/Library/SceneVisibilityState.asset
+CompanionServer/Library/ScriptAssemblies/Assembly-CSharp.dll
+CompanionServer/Library/Search/transactions.db
+CompanionServer/Library/ShaderCache/EditorEncounteredVariants
+CompanionServer/Library/SourceAssetDB
+CompanionServer/Library/StateCache/SceneView/8c/8cd7c613bf844de3b80696e27a479d5e.json
+CompanionServer/obj/Debug/Assembly-CSharp.csproj.AssemblyReference.cache
+CompanionServer/obj/Debug/Assembly-CSharp.Player.csproj.AssemblyReference.cache
+CompanionServer/obj/Debug/DesignTimeResolveAssemblyReferencesInput.cache
+CompanionServer/obj/Debug/Unity.CollabProxy.Editor.csproj.AssemblyReference.cache
+CompanionServer/UserSettings/Layouts/default-2022.dwlt
