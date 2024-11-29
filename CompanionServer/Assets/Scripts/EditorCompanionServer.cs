@@ -4,6 +4,7 @@ using Fleck;
 using System.Threading.Tasks;
 using UnityEditor;
 using System.Collections;
+using System.IO;
 
 public class EditorCompanionServer : MonoBehaviour
 {
@@ -102,16 +103,50 @@ public class EditorCompanionServer : MonoBehaviour
 
     private async Task OnMessageReceived(IWebSocketConnection socket, string message)
     {
-        if (message == "Authentication") 
+        if (message.StartsWith("ScreenshotData|"))
         {
+            // Extract the Base64 string
+            string base64Data = message.Substring("ScreenshotData|".Length);
+
             try
             {
-                await socket.Send("Authentication Recieved");
+                // Decode the Base64 string to byte array
+                byte[] imageBytes = Convert.FromBase64String(base64Data);
+
+                // Save the image to the Assets folder
+                SaveImageToAssets(imageBytes, "ReceivedScreenshot.png");
+
+                Debug.Log("Screenshot data received and saved.");
             }
             catch (Exception ex)
             {
-                Debug.LogError($"Failed to send acknowledgment: {ex.Message}");
+                Debug.LogError($"Failed to process screenshot data: {ex.Message}");
             }
+        }
+        else
+        {
+            Debug.Log("Received message: " + message);
+        }
+    }
+
+    private void SaveImageToAssets(byte[] imageBytes, string fileName)
+    {
+        // Define the path to save the file in the Assets folder
+        string assetsFolderPath = Application.dataPath;
+        string filePath = System.IO.Path.Combine(assetsFolderPath, fileName);
+
+        try
+        {
+            // Write the bytes to a file
+            File.WriteAllBytes(filePath, imageBytes);
+            Debug.Log($"Image saved to: {filePath}");
+
+            // Refresh the AssetDatabase to make the image appear in the Unity Editor
+            EditorApplication.delayCall += () => AssetDatabase.Refresh();
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"Failed to save image: {ex.Message}");
         }
     }
 
