@@ -91,3 +91,5 @@ CompanionServer/obj/Debug/Assembly-CSharp.Player.csproj.AssemblyReference.cache
 CompanionServer/obj/Debug/DesignTimeResolveAssemblyReferencesInput.cache
 CompanionServer/obj/Debug/Unity.CollabProxy.Editor.csproj.AssemblyReference.cache
 CompanionServer/UserSettings/Layouts/default-2022.dwlt
+/CompanionServer/obj
+/CompanionServer/Library
